@@ -1,13 +1,29 @@
 import 'dotenv/config';
+import cors from 'cors';
+import express from 'express';
+import { ApolloServer } from 'apollo-server-express';
 
-const userCredentials = { firstname: 'Robin' };
-const userDetails = { nationality: 'German' };
+import schema from './schema';
+import resolvers from './resolvers';
+import models from './models';
 
-const user = {
-  ...userCredentials,
-  ...userDetails,
-};
+async function startApolloServer(typeDefs, resolvers, context) {
+    const server = new ApolloServer({ typeDefs, resolvers, context })
+    const app = express();
+    app.use(cors());
+    await server.start();
+    server.applyMiddleware({ app, path: '/graphql' });
 
-console.log(user);
+    app.listen({ port: 8000 }, () => {
+        console.log('Apollo Server on http://localhost:8000/graphql');
+    });
+}
 
-console.log(process.env.SOME_ENV_VARIABLE);
+startApolloServer(
+    schema,
+    resolvers,
+    {
+        models,
+        me: models.users[1],
+    }
+);
